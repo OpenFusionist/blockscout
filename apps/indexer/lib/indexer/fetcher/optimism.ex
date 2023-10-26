@@ -115,7 +115,14 @@ defmodule Indexer.Fetcher.Optimism do
 
   def get_block_number_by_tag(tag, json_rpc_named_arguments, retries \\ 3) do
     error_message = &"Cannot fetch #{tag} block number. Error: #{inspect(&1)}"
-    repeated_call(&fetch_block_number_by_tag_op_version/2, [tag, json_rpc_named_arguments], error_message, retries)
+    # repeated_call(&fetch_block_number_by_tag_op_version/2, [tag, json_rpc_named_arguments], error_message, retries)
+    actual_tag = if tag == "safe", do: "latest", else: tag
+    case repeated_call(&fetch_block_number_by_tag_op_version/2, [actual_tag, json_rpc_named_arguments], error_message, retries) do
+      {:ok, block_number} when tag == "safe" ->
+        {:ok, block_number - 10}
+      other ->
+        other
+    end
   end
 
   defp get_block_timestamp_by_number_inner(number, json_rpc_named_arguments) do
